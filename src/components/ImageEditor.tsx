@@ -133,8 +133,11 @@ export const ImageEditor = () => {
     if (!drawing) return;
     const p = getPos(e);
     setStrokes(prev => {
+      if (prev.length === 0) return prev;
       const copy = [...prev];
-      copy[copy.length - 1] = { ...copy[copy.length - 1], points: [...copy[copy.length - 1].points, p] };
+      const last = copy[copy.length - 1];
+      if (!last) return prev;
+      copy[copy.length - 1] = { ...last, points: [...last.points, p] };
       return copy;
     });
   };
