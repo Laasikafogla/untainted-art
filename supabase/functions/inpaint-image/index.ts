@@ -61,9 +61,15 @@ Deno.serve(async (req) => {
     }
 
     const data = await response.json();
-    const out = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    console.log("AI gateway response keys:", Object.keys(data?.choices?.[0]?.message ?? {}));
+    const msg = data.choices?.[0]?.message;
+    const out =
+      msg?.images?.[0]?.image_url?.url ||
+      msg?.images?.[0]?.url ||
+      (typeof msg?.content === "string" ? null : msg?.content?.find?.((c: any) => c.type === "image_url")?.image_url?.url);
     if (!out) {
-      return new Response(JSON.stringify({ error: "No image returned" }),
+      console.error("No image in response:", JSON.stringify(data).slice(0, 1000));
+      return new Response(JSON.stringify({ error: "No image returned from AI" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
