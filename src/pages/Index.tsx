@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import type { Session } from "@supabase/supabase-js";
 import { Logo } from "@/components/Logo";
 import { ImageEditor } from "@/components/ImageEditor";
 import { TextCleaner } from "@/components/TextCleaner";
-import { ImageIcon, Type, Github } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { ImageIcon, Type, LogIn, LogOut, Lock } from "lucide-react";
 
 type Tab = "image" | "text";
 
@@ -13,6 +17,19 @@ const tabs: { id: Tab; label: string; icon: typeof ImageIcon; desc: string }[] =
 
 const Index = () => {
   const [tab, setTab] = useState<Tab>("image");
+  const [session, setSession] = useState<Session | null>(null);
+  const nav = useNavigate();
+
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    setSession(null);
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -23,13 +40,20 @@ const Index = () => {
           AI watermark remover · images, text & invisible markers
         </div>
         <div className="ml-auto flex items-center gap-3">
-          <a
-            href="https://docs.lovable.dev/features/cloud"
-            target="_blank" rel="noreferrer"
-            className="text-xs text-muted-foreground hover:text-foreground transition"
-          >
-            <Github className="h-4 w-4 inline mr-1" /> Docs
-          </a>
+          {session ? (
+            <>
+              <span className="hidden sm:inline text-xs text-muted-foreground truncate max-w-[180px]">
+                {session.user.email}
+              </span>
+              <Button size="sm" variant="ghost" onClick={signOut}>
+                <LogOut className="h-4 w-4" /> Sign out
+              </Button>
+            </>
+          ) : (
+            <Button size="sm" variant="secondary" onClick={() => nav("/auth")}>
+              <LogIn className="h-4 w-4" /> Sign in
+            </Button>
+          )}
         </div>
       </header>
 
@@ -72,7 +96,28 @@ const Index = () => {
         {/* Main */}
         <main className="flex-1 p-4 lg:p-6 bg-canvas overflow-auto">
           <h1 className="sr-only">AI Watermark Remover — images, text and invisible markers</h1>
-          {tab === "image" ? <ImageEditor /> : <TextCleaner />}
+          {tab === "image" ? (
+            session ? (
+              <ImageEditor />
+            ) : (
+              <div className="grid place-items-center h-full">
+                <div className="rounded-xl bg-panel shadow-panel p-8 max-w-md text-center space-y-4">
+                  <div className="mx-auto h-12 w-12 rounded-full gradient-primary grid place-items-center">
+                    <Lock className="h-5 w-5 text-primary-foreground" />
+                  </div>
+                  <h2 className="font-display text-lg font-bold">Sign in to use AI image cleanup</h2>
+                  <p className="text-xs text-muted-foreground">
+                    AI inpainting uses credits, so we require an account. Text cleaning works without signing in.
+                  </p>
+                  <Button asChild className="gradient-primary text-primary-foreground hover:opacity-90 shadow-glow">
+                    <Link to="/auth"><LogIn className="h-4 w-4" /> Sign in or create account</Link>
+                  </Button>
+                </div>
+              </div>
+            )
+          ) : (
+            <TextCleaner />
+          )}
         </main>
       </div>
     </div>
