@@ -1,24 +1,72 @@
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 
 interface Body {
-  image: string; // data URL
-  mask: string;  // data URL (white = remove)
+  image: string;
+  mask: string;
   prompt?: string;
 }
+
+const MAX_BYTES = 12 * 1024 * 1024; // 12 MB
+const MAX_PROMPT = 500;
+const DATA_URL_RE = /^data:image\/(png|jpeg|jpg|webp);base64,[A-Za-z0-9+/=]+$/;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  const json = (status: number, body: Record<string, unknown>) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
   try {
-    const { image, mask, prompt } = (await req.json()) as Body;
+    // --- Auth check ---
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return json(401, { error: "Unauthorized" });
+    }
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+    );
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return json(401, { error: "Unauthorized" });
+    }
+
+    // --- Size check ---
+    const raw = await req.arrayBuffer();
+    if (raw.byteLength > MAX_BYTES) {
+      return json(413, { error: "Payload too large" });
+    }
+
+    let body: Body;
+    try {
+      body = JSON.parse(new TextDecoder().decode(raw)) as Body;
+    } catch {
+      return json(400, { error: "Invalid JSON body" });
+    }
+
+    const { image, mask, prompt } = body;
+
+    // --- Input validation ---
     if (!image || !mask) {
-      return new Response(JSON.stringify({ error: "image and mask required" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json(400, { error: "image and mask required" });
+    }
+    if (typeof image !== "string" || typeof mask !== "string" || !DATA_URL_RE.test(image) || !DATA_URL_RE.test(mask)) {
+      return json(400, { error: "image and mask must be base64 image data URLs" });
+    }
+    if (prompt !== undefined && (typeof prompt !== "string" || prompt.length > MAX_PROMPT)) {
+      return json(400, { error: `prompt must be a string up to ${MAX_PROMPT} characters` });
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    if (!LOVABLE_API_KEY) {
+      console.error("LOVABLE_API_KEY not configured");
+      return json(500, { error: "Server configuration error" });
+    }
 
     const instruction =
       (prompt?.trim() || "Remove the watermark, logo, signature, or text overlay highlighted by the magenta mask in the second image. Reconstruct the area underneath so it seamlessly matches the surrounding texture, lighting, and content of the first image. Output a clean, watermark-free version of the original image at the same resolution.");
@@ -49,15 +97,12 @@ Deno.serve(async (req) => {
       const text = await response.text();
       console.error("AI gateway error", response.status, text);
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit hit. Please wait a moment and try again." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return json(429, { error: "Rate limit hit. Please wait a moment and try again." });
       }
       if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted. Add funds in Settings → Workspace → Usage." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return json(402, { error: "AI credits exhausted. Add funds in Settings → Workspace → Usage." });
       }
-      return new Response(JSON.stringify({ error: "AI gateway failed" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return json(500, { error: "AI gateway failed" });
     }
 
     const data = await response.json();
@@ -69,16 +114,15 @@ Deno.serve(async (req) => {
       (typeof msg?.content === "string" ? null : msg?.content?.find?.((c: any) => c.type === "image_url")?.image_url?.url);
     if (!out) {
       console.error("No image in response:", JSON.stringify(data).slice(0, 1000));
-      return new Response(JSON.stringify({ error: "No image returned from AI" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return json(500, { error: "No image returned from AI" });
     }
 
-    return new Response(JSON.stringify({ image: out }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json(200, { image: out });
   } catch (e) {
     console.error("inpaint-image error", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
