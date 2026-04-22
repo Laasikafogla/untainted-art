@@ -89,20 +89,20 @@ export const ImageEditor = () => {
     octx.clearRect(0, 0, w, h);
     for (const s of strokes) {
       const isErase = s.mode === "erase";
+      mctx.globalCompositeOperation = "source-over";
       mctx.strokeStyle = isErase ? "#000" : "#fff";
+      mctx.fillStyle = isErase ? "#000" : "#fff";
       mctx.lineWidth = s.size;
       mctx.lineCap = "round"; mctx.lineJoin = "round";
-      octx.strokeStyle = isErase ? "rgba(0,0,0,0)" : "rgba(236, 72, 153, 0.55)";
+      octx.globalCompositeOperation = isErase ? "destination-out" : "source-over";
+      octx.strokeStyle = isErase ? "rgba(0,0,0,1)" : "rgba(236, 72, 153, 0.55)";
+      octx.fillStyle = isErase ? "rgba(0,0,0,1)" : "rgba(236, 72, 153, 0.55)";
       octx.lineWidth = s.size;
       octx.lineCap = "round"; octx.lineJoin = "round";
       if (s.points.length === 1) {
         const p = s.points[0];
-        mctx.fillStyle = isErase ? "#000" : "#fff";
         mctx.beginPath(); mctx.arc(p.x, p.y, s.size / 2, 0, Math.PI * 2); mctx.fill();
-        if (!isErase) {
-          octx.fillStyle = "rgba(236, 72, 153, 0.55)";
-          octx.beginPath(); octx.arc(p.x, p.y, s.size / 2, 0, Math.PI * 2); octx.fill();
-        }
+        octx.beginPath(); octx.arc(p.x, p.y, s.size / 2, 0, Math.PI * 2); octx.fill();
       } else {
         mctx.beginPath(); octx.beginPath();
         s.points.forEach((p, i) => {
@@ -110,9 +110,10 @@ export const ImageEditor = () => {
           else { mctx.lineTo(p.x, p.y); octx.lineTo(p.x, p.y); }
         });
         mctx.stroke();
-        if (!isErase) octx.stroke();
+        octx.stroke();
       }
     }
+    octx.globalCompositeOperation = "source-over";
   }, [strokes, naturalSize]);
 
   const getPos = (e: React.PointerEvent) => {
