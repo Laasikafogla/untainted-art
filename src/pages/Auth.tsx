@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/Logo";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Sparkles } from "lucide-react";
+import { Seo } from "@/components/Seo";
 
 const schema = z.object({
   email: z.string().trim().email("Invalid email").max(255),
