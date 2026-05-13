@@ -1,5 +1,6 @@
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { Seo } from "@/components/Seo";
 
 const NotFound = () => {
   const location = useLocation();
@@ -10,6 +11,11 @@ const NotFound = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted">
+      <Seo
+        title="Page Not Found — Unmark"
+        description="The page you’re looking for doesn’t exist. Head back to Unmark to clean up images and text."
+        canonical="https://untainted-art.lovable.app/"
+      />
       <div className="text-center">
         <h1 className="mb-4 text-4xl font-bold">404</h1>
         <p className="mb-4 text-xl text-muted-foreground">Oops! Page not found</p>

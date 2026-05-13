@@ -7,6 +7,7 @@ import { TextCleaner } from "@/components/TextCleaner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { ImageIcon, Type, LogIn, LogOut, Lock } from "lucide-react";
+import { Seo } from "@/components/Seo";
 
 type Tab = "image" | "text";
 
@@ -33,6 +34,11 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <Seo
+        title="Unmark — AI Watermark Remover"
+        description="Remove watermarks from AI-generated images, text, and invisible markers. Brush over watermarks and let AI inpaint them away."
+        canonical="https://untainted-art.lovable.app/"
+      />
       {/* Top bar */}
       <header className="h-14 border-b border-border bg-toolbar flex items-center px-4 gap-4 shrink-0">
         <Logo />

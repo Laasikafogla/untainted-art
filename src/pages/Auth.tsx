@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/Logo";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Sparkles } from "lucide-react";
+import { Seo } from "@/components/Seo";
 
 const schema = z.object({
   email: z.string().trim().email("Invalid email").max(255),
@@ -64,6 +65,11 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen grid place-items-center bg-canvas p-4">
+      <Seo
+        title="Sign In — Unmark"
+        description="Sign in or create an Unmark account to use the AI image watermark remover."
+        canonical="https://untainted-art.lovable.app/auth"
+      />
       <div className="w-full max-w-sm rounded-xl bg-panel shadow-panel p-6 space-y-5">
         <div className="flex items-center justify-center"><Logo /></div>
         <div className="text-center">
