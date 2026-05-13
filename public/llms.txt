@@ -1,0 +1,10 @@
+# Untainted Art
+
+> AI-powered tools to clean up images and text — remove watermarks, erase unwanted objects, and strip hidden characters.
+
+Untainted Art is a free web app offering two utilities: an image editor that uses AI inpainting to remove watermarks and unwanted objects from photos, and a text cleaner that strips invisible and unwanted characters from pasted text.
+
+## Pages
+
+- [Home](/): Image cleanup and text cleaning tools.
+- [Sign in](/auth): Sign in or create an account to use the image tool.
