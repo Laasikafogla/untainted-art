@@ -26,13 +26,14 @@ Deno.serve(async (req) => {
     if (!authHeader?.startsWith("Bearer ")) {
       return json(401, { error: "Unauthorized" });
     }
+    const token = authHeader.replace("Bearer ", "");
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } },
     );
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: userData, error: userError } = await supabase.auth.getUser(token);
+    if (userError || !userData?.user) {
       return json(401, { error: "Unauthorized" });
     }
 
