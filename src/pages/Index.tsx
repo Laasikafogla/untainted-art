@@ -103,26 +103,32 @@ const Index = () => {
         <main className="flex-1 p-4 lg:p-6 bg-canvas overflow-auto">
           <h1 className="sr-only">AI Watermark Remover — images, text and invisible markers</h1>
           {tab === "image" ? (
-            session ? (
-              <ImageEditor />
-            ) : (
-              <div className="grid place-items-center h-full">
-                <div className="rounded-xl bg-panel shadow-panel p-8 max-w-md text-center space-y-4">
-                  <div className="mx-auto h-12 w-12 rounded-full gradient-primary grid place-items-center">
-                    <Lock className="h-5 w-5 text-primary-foreground" />
+            <>
+              <h2 className="sr-only">Image watermark remover</h2>
+              {session ? (
+                <ImageEditor />
+              ) : (
+                <div className="grid place-items-center h-full">
+                  <div className="rounded-xl bg-panel shadow-panel p-8 max-w-md text-center space-y-4">
+                    <div className="mx-auto h-12 w-12 rounded-full gradient-primary grid place-items-center">
+                      <Lock className="h-5 w-5 text-primary-foreground" />
+                    </div>
+                    <h3 className="font-display text-lg font-bold">Sign in to use AI image cleanup</h3>
+                    <p className="text-xs text-muted-foreground">
+                      AI inpainting uses credits, so we require an account. Text cleaning works without signing in.
+                    </p>
+                    <Button asChild className="gradient-primary text-primary-foreground hover:opacity-90 shadow-glow">
+                      <Link to="/auth"><LogIn className="h-4 w-4" /> Sign in or create account</Link>
+                    </Button>
                   </div>
-                  <h2 className="font-display text-lg font-bold">Sign in to use AI image cleanup</h2>
-                  <p className="text-xs text-muted-foreground">
-                    AI inpainting uses credits, so we require an account. Text cleaning works without signing in.
-                  </p>
-                  <Button asChild className="gradient-primary text-primary-foreground hover:opacity-90 shadow-glow">
-                    <Link to="/auth"><LogIn className="h-4 w-4" /> Sign in or create account</Link>
-                  </Button>
                 </div>
-              </div>
-            )
+              )}
+            </>
           ) : (
-            <TextCleaner />
+            <>
+              <h2 className="sr-only">Text watermark remover</h2>
+              <TextCleaner />
+            </>
           )}
         </main>
       </div>

@@ -90,7 +90,7 @@ const Auth = () => {
             <Label htmlFor="password" className="text-xs">Password</Label>
             <Input id="password" type="password" autoComplete={mode === "signin" ? "current-password" : "new-password"} value={password} onChange={(e) => setPassword(e.target.value)} required />
           </div>
-          <Button type="submit" disabled={busy} className="w-full gradient-primary text-primary-foreground hover:opacity-90 shadow-glow">
+          <Button type="submit" disabled={busy} aria-label={busy ? (mode === "signin" ? "Signing in" : "Signing up") : undefined} className="w-full gradient-primary text-primary-foreground hover:opacity-90 shadow-glow">
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : mode === "signin" ? "Sign in" : "Sign up"}
           </Button>
         </form>
